@@ -5,6 +5,10 @@ import java.util.*;
 
 public class DependencyManager {
     private Map<File, List<File>> dependencyGraph = new HashMap<>();
+    //Список поддерживаемых расширений для текстовых файлов
+    private final List<String> textFileExtensions = Arrays.asList(
+            "txt", "md", "log", "xml", "doc", "docx", "odt", "rtf", "csv"
+    );
 
     public void analyzeDependencies(List<File> files) throws IOException{
         for(File file : files){
@@ -23,6 +27,36 @@ public class DependencyManager {
             }
         }
         return sortedFiles;
+    }
+
+    //Метод для поиска текстовых файлов
+    public List<File> findTextFiles(File directory){
+        List<File> textFiles = new ArrayList<>();
+        if (directory.isDirectory()){
+            for (File file : directory.listFiles()){
+                if(file.isDirectory()){
+                    textFiles.addAll(findTextFiles(file)); //Рекурсивный поиск
+                } else if (isTextFile(file)){
+                    textFiles.add(file);
+                }
+            }
+        }
+        return textFiles;
+    }
+    //Проверка, является ли файл текстовым
+    private boolean isTextFile(File file){
+        String name = file.getName().toLowerCase();
+        String extension = getFileExtension(name);
+        return textFileExtensions.contains(extension);
+    }
+
+    //Метод для получение расширения файл
+    private String getFileExtension(String fileName){
+        int lastIndexOfDot = fileName.lastIndexOf('.');
+        if (lastIndexOfDot == -1){
+            return ""; //Если нет расширений
+        }
+        return fileName.substring(lastIndexOfDot + 1);
     }
 
     private boolean topologicalSort(File file, Set<File> visited, Set<File> recStack, List<File> sortedFiles) {
