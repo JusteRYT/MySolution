@@ -42,10 +42,12 @@ public class DependencyManager {
 
     private List<File> parseDependencies(File file) throws IOException {
         List<File> dependencies = new ArrayList<>();
-        for (String line : Files.readAllLines(file.toPath())){
+        List<String> lines = Files.readAllLines(file.toPath());
+        for (String line : lines){
             if (line.startsWith("*require '")){
-                String dePath = line.split("'")[1].split("'")[0];
-                dependencies.add(new File(dePath));
+                String requiredFileName = line.substring(line.indexOf("'") + 1, line.lastIndexOf("'"));
+                File dependecnyFile = new File(file.getParentFile(), requiredFileName);
+                dependencies.add(dependecnyFile);
             }
         }
         return dependencies;
