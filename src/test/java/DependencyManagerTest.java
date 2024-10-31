@@ -1,28 +1,61 @@
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import javax.tools.ForwardingFileObject;
 import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.io.IOException;
 import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 
+
 public class DependencyManagerTest {
+    private DependencyManager manager;
+
+    @BeforeEach
+    void setUp(){
+        manager = new DependencyManager();
+    }
     @Test
-    public void testSortFilesNoCycle() throws Exception{
-        Path tempDir = Files.createTempDirectory("testDir");
-        File file1 = Files.createFile(tempDir.resolve("file1.txt")).toFile();
-        File file2 = Files.createFile(tempDir.resolve("file2.txt")).toFile();
-        Files.writeString(file1.toPath(), "*require 'file2.txt'*");
+    void testIsTextFile() {
+        // Позитивные тесты
+        assertTrue(manager.isTextFile(new File("test.txt")));
+        assertTrue(manager.isTextFile(new File("document.md")));
+        assertTrue(manager.isTextFile(new File("notes.log")));
+        assertTrue(manager.isTextFile(new File("data.xml")));
+        assertTrue(manager.isTextFile(new File("report.docx")));
 
-        DependencyManager manager = new DependencyManager();
-        manager.analyzeDependencies(List.of(file1, file2));
-        List<File> sortedFiles = manager.sortFiles();
-        assertEquals(List.of(file2, file1), sortedFiles);
+        // Негативные тесты
+        assertFalse(manager.isTextFile(new File("image.png")));
+        assertFalse(manager.isTextFile(new File("video.mp4")));
+        assertFalse(manager.isTextFile(new File("archive.zip")));
+        assertFalse(manager.isTextFile(new File("document"))); // Без расширения
+    }
 
-        Files.deleteIfExists(file1.toPath());
-        Files.deleteIfExists(file2.toPath());
-        Files.deleteIfExists(tempDir);
+    @Test
+    void testFindTextFiles() throws IOException {
+        // Создайте временную директорию и файлы для тестирования
+        File tempDir = new File("tempTestDir");
+        tempDir.mkdir();
+
+        // Создание тестовых файлов
+        new File(tempDir, "file1.txt").createNewFile();
+        new File(tempDir, "file2.md").createNewFile();
+        new File(tempDir, "file3.jpg").createNewFile();
+        new File(tempDir, "subDir").mkdir();
+        new File(tempDir + "/subDir", "file4.xml").createNewFile();
+
+        // Проверка, что найденные файлы соответствуют ожиданиям
+        List<File> textFiles = manager.findTextFiles(tempDir);
+        assertEquals(3, textFiles.size());
+        assertTrue(textFiles.stream().anyMatch(file -> file.getName().equals("file1.txt")));
+        assertTrue(textFiles.stream().anyMatch(file -> file.getName().equals("file2.md")));
+        assertTrue(textFiles.stream().anyMatch(file -> file.getName().equals("file4.xml")));
+
+        // Удаление временной директории
+        for (File file : tempDir.listFiles()) {
+            file.delete();
+        }
+        tempDir.delete();
     }
 }

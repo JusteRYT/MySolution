@@ -44,7 +44,7 @@ public class DependencyManager {
         return textFiles;
     }
     //Проверка, является ли файл текстовым
-    private boolean isTextFile(File file){
+    boolean isTextFile(File file){
         String name = file.getName().toLowerCase();
         String extension = getFileExtension(name);
         return textFileExtensions.contains(extension);
