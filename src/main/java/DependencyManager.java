@@ -3,13 +3,22 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.*;
 
+/**
+ * Класс для управления зависимостями файлов и их сортировкой.
+ */
 public class DependencyManager {
-    private Map<File, List<File>> dependencyGraph = new HashMap<>();
+    private final Map<File, List<File>> dependencyGraph = new HashMap<>();
     //Список поддерживаемых расширений для текстовых файлов
     private final List<String> textFileExtensions = Arrays.asList(
             "txt", "md", "log", "xml", "doc", "docx", "odt", "rtf", "csv"
     );
 
+    /**
+     * Анализирует зависимости файлов.
+     *
+     * @param files Список файлов для анализа.
+     * @throws IOException Если возникает ошибка при чтении файлов.
+     */
     public void analyzeDependencies(List<File> files) throws IOException{
         for(File file : files){
             List<File> dependencies = parseDependencies(file);
@@ -17,6 +26,12 @@ public class DependencyManager {
         }
     }
 
+    /**
+     * Сортирует файлы в порядке их зависимостей.
+     *
+     * @return Отсортированный список файлов.
+     * @throws Exception Если обнаружена циклическая зависимость.
+     */
     public List<File> sortFiles() throws Exception{
         List<File> sortedFiles =  new ArrayList<>();
         Set<File> visited = new HashSet<>();
@@ -29,11 +44,16 @@ public class DependencyManager {
         return sortedFiles;
     }
 
-    //Метод для поиска текстовых файлов
+    /**
+     * Находит текстовые файлы в указанной директории.
+     *
+     * @param directory Директория для поиска.
+     * @return Список найденных текстовых файлов.
+     */
     public List<File> findTextFiles(File directory){
         List<File> textFiles = new ArrayList<>();
         if (directory.isDirectory()){
-            for (File file : directory.listFiles()){
+            for (File file : Objects.requireNonNull(directory.listFiles())){
                 if(file.isDirectory()){
                     textFiles.addAll(findTextFiles(file)); //Рекурсивный поиск
                 } else if (isTextFile(file)){
@@ -43,14 +63,24 @@ public class DependencyManager {
         }
         return textFiles;
     }
-    //Проверка, является ли файл текстовым
+    /**
+     * Проверяет, является ли файл текстовым.
+     *
+     * @param file Файл для проверки.
+     * @return true, если файл текстовый; иначе false.
+     */
     boolean isTextFile(File file){
         String name = file.getName().toLowerCase();
         String extension = getFileExtension(name);
         return textFileExtensions.contains(extension);
     }
 
-    //Метод для получение расширения файл
+    /**
+     * Получает расширение файла.
+     *
+     * @param fileName Имя файла.
+     * @return Расширение файла или пустая строка, если расширение отсутствует.
+     */
     private String getFileExtension(String fileName){
         int lastIndexOfDot = fileName.lastIndexOf('.');
         if (lastIndexOfDot == -1){
@@ -59,6 +89,15 @@ public class DependencyManager {
         return fileName.substring(lastIndexOfDot + 1);
     }
 
+    /**
+     * Выполняет топологическую сортировку файлов.
+     *
+     * @param file Текущий файл для сортировки.
+     * @param visited Множество посещенных файлов.
+     * @param recStack Множество файлов в текущем стеке.
+     * @param sortedFiles Список для хранения отсортированных файлов.
+     * @return true, если сортировка выполнена успешно; иначе false.
+     */
     private boolean topologicalSort(File file, Set<File> visited, Set<File> recStack, List<File> sortedFiles) {
         visited.add(file);
         recStack.add(file);
@@ -74,6 +113,13 @@ public class DependencyManager {
         return true;
     }
 
+    /**
+     * Парсит зависимости из файла.
+     *
+     * @param file Файл для анализа.
+     * @return Список зависимостей.
+     * @throws IOException Если возникает ошибка при чтении файла.
+     */
     private List<File> parseDependencies(File file) throws IOException {
         List<File> dependencies = new ArrayList<>();
         List<String> lines = Files.readAllLines(file.toPath());
